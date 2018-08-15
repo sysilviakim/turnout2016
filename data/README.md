@@ -1,0 +1,1 @@
+This folder needs `CCES16_Common_OUTPUT_Feb2018_VV.tab` from [CCES Common Content, 2016](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi%3A10.7910/DVN/GDF6Z0). The file is too big to input into this repository, so when the user inputs `git clone https://github.com/sysilviakim/turnout2016` into the command line, the initialized `data` subdirectory will be empty.
