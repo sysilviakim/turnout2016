@@ -14,30 +14,8 @@ test_index <-
 train <- turn_list$test_robust[test_index, ]
 test <- turn_list$test_robust[-test_index, ]
 
-# Variable importance ==========================================================
-varimp.df <-
-  lapply(
-    c("logit", "cart", "rf", "ff"),
-    function(y)
-      varimp_routine(
-        method = y,
-        choice_top = 20,
-        x = eval(parse(text = paste("turn", y, sep = ".")))
-      )
-  ) %>%
-  bind_rows() %>%
-  dplyr::group_by(rownames) %>%
-  dplyr::summarise(
-    logit = sum(logit, na.rm = T),
-    cart = sum(cart, na.rm = T),
-    rf = sum(rf, na.rm = T),
-    ff = sum(ff, na.rm = T)
-  ) %>%
-  dplyr::mutate(ff = DMwR::ReScaling(ff, 0, 100)) %>%
-  dplyr::filter(logit + cart + rf + ff > 0)
-varimp.df <- cces_label(varimp.df)
-
 # Run each method only with top selected variables, from top 3 to top 20 =======
+load("./output/varimp.module.Rda")
 mc <- makeCluster(cl)
 registerDoParallel(mc)
 for (method in c("logit", "cart", "rf", "ff")) {
@@ -103,8 +81,31 @@ plot_grey(pdf_default(p)) +
 dev.off()
 
 # Table ========================================================================
-names(top20_auc) <- c("Number of Variables Used", "Method",
-                      "Lower Bd. (95% conf.)", "Mean", "Upper Bd. (95% conf.)")
-
 print("Screening strength of each method summarized.")
 
+# In a table ===================================================================
+top20_auc %<>%
+  tidyr::gather(key, val, -Number, -Method) %>%
+  tidyr::unite(new.col, c(key, Method)) %>% 
+  tidyr::spread(new.col, val) %>%
+  dplyr::select(
+    `Number of Variables Used` = Number,
+    min_FF, max_FF, min_Logit, max_Logit, min_CART, max_CART, min_RF, max_RF
+  ) 
+
+print(
+  xtable(
+    top20_auc,
+    digits = 4,
+    caption = 
+      "Variable Screening Performance Comparison, 95% Confidence Interval",
+    label = "tab:turn-screen"
+  ),
+  include.rownames = FALSE,
+  table.placement = "hbt!",
+  booktabs = TRUE,
+  caption.placement = "top",
+  hline.after = c(0),
+  align = "l|llllllll",
+  file = "./tables/screen_ci.tex"
+)
