@@ -41,10 +41,15 @@ test <- turn_list$test %>% dplyr::select(vars)
 round(prop.table(table(turn_list$test$depvar)) * 100, digits = 4)
 ## Predicted/fitted turnout in test set: 83.3%
 p <- round(prop.table(table(predict(ff, test))) * 100, digits = 4)
-## counterfactuals for each:
-comb <- expand.grid(c(0, 1), vars, stringsAsFactors = FALSE)
+## counterfactuals for each policy position variable
+comb <- 
+  expand.grid(
+    c(1), 
+    vars[grepl("CC16_333|CC16_351I|CC16_337|CC16_330|CC16_415r", vars)],
+    stringsAsFactors = FALSE
+  )
 
-sink("./tables/counterfactual.txt")
+counterfactual <- data.frame()
 for (i in seq(nrow(comb))) {
   var <- comb[i, ]$Var2
   val <- comb[i, ]$Var1
@@ -54,15 +59,37 @@ for (i in seq(nrow(comb))) {
     prop.table(table(predict(
       ff, test %>% dplyr::mutate(!!as.name(var) := val)
     ))) * 100, 
-    digits = 4
+    digits = 10
   )
-  print(paste0(
-    "Turnout ", ifelse(p["Voted"] < c["Voted"], "increases", "decreases"), 
-    " when ", (cces_label %>% dplyr::filter(variable == var))$label, 
-    " is ", val, " to ", c["Voted"], "%."
-  ))
+  temp <- 
+    data.frame(
+      ## Paper's labels translated to be more legible/intuitive
+      label = paste0("Everybody ", 
+                     (cces_label %>% dplyr::filter(variable == var))$label),
+      out = ifelse(p["Voted"] < c["Voted"], "uparrow", "downarrow"),
+      value = c["Voted"], 
+      delta = c["Voted"] - p["Voted"]
+    ) %>%
+    mutate_if(is.factor, as.character)
+  counterfactual <- dplyr::bind_rows(counterfactual, temp)
 }
-sink()
+
+print(
+  xtable(
+    counterfactual,
+    digits = 2,
+    caption = 
+      "Counterfactuals, Top 20 Variables Selected by Fuzzy Forests",
+    label = "tab:counterfactual"
+  ),
+  include.rownames = FALSE,
+  table.placement = "hbt!",
+  booktabs = TRUE,
+  caption.placement = "top",
+  hline.after = c(0),
+  align = "l|llllllll",
+  file = "./tables/counterfactual.tex"
+)
 
 # Plotting =====================================================================
 p <- varImpPlotFF(turn.ff, cces_label = cces_label)
