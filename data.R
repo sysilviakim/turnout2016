@@ -11,6 +11,23 @@ turn <-
     stringsAsFactors = FALSE
   )
 
+varlist <- matrix(data = c(unlist(indvar_generate(turn)), ""), ncol = 6)
+print(
+  xtable(
+    varlist,
+    caption = 
+      "CCES Post-Election Features Used in Fuzzy Forests",
+    label = "tab:features1"
+  ),
+  include.rownames = FALSE,
+  include.colnames = FALSE,
+  table.placement = "hbt!",
+  booktabs = TRUE,
+  caption.placement = "top",
+  align = "l|llllllll",
+  file = "./tables/features.tex"
+)
+
 # FIPS =========================================================================
 turn %<>%
   ## Currently, FIPS code is "01001", "01003", ... turn into numeric.
