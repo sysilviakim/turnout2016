@@ -1,4 +1,5 @@
 # Basic libraries ==============================================================
+library("plyr")
 library("tidyverse")
 library("magrittr")
 library("Rmisc")
@@ -28,6 +29,7 @@ options(
   scipen = 100
 )
 ppi <- 300
+load("cces_label.Rda")
 
 # Functions (non-graphics) =====================================================
 ## Reproducible seeds for trainControl -----------------------------------------
@@ -129,10 +131,13 @@ state_senate_verify <- function(df) {
         .$inputstate == 55 ~ 1, # Wisconson, Republican
         .$inputstate == 56 ~ 1  # Wyoming,   Republican
       ),
-      CC16_321c = ifelse(CC16_321c == state_senate, 1,
-        ifelse((CC16_321c %in% c(1, 3) & state_senate == 2) |
-          (CC16_321c %in% c(2, 3) & state_senate == 1),
-        2, CC16_321c)
+      CC16_321c = ifelse(
+        CC16_321c == state_senate, 1,
+        ifelse(
+          (CC16_321c %in% c(1, 3) & state_senate == 2) |
+            (CC16_321c %in% c(2, 3) & state_senate == 1),
+          2, CC16_321c
+        )
       ),
       # Which party has majority in ... Lower Chamber
       # https://ballotpedia.org/Alabama_House_of_Representatives
@@ -190,10 +195,13 @@ state_senate_verify <- function(df) {
         .$inputstate == 55 ~ 1, # Wisconson, Republican
         .$inputstate == 56 ~ 1  # Wyoming,   Republican
       ),
-      CC16_321d = ifelse(CC16_321d == state_assembly, 1,
-        ifelse((CC16_321d %in% c(1, 3) & state_assembly == 2) |
-          (CC16_321d %in% c(2, 3) & state_assembly == 1),
-        2, CC16_321d)
+      CC16_321d = ifelse(
+        CC16_321d == state_assembly, 1,
+        ifelse(
+          (CC16_321d %in% c(1, 3) & state_assembly == 2) |
+            (CC16_321d %in% c(2, 3) & state_assembly == 1),
+          2, CC16_321d
+        )
       )
     )
   return(output)
@@ -444,132 +452,6 @@ screen_routine <- function(varimp.df, method, i, train, test, mtrys) {
   output[["f1"]] <- performance(pred.compare, "f")
   return(output)
 }
-
-## Variable labels -------------------------------------------------------------
-data(fips)
-
-## Make sure to check the labels with CCES 2016 Guide!! Preliminary labeling
-cces_label <-
-  list(
-    rownames = c(
-      paste0("inputstate.", fips$stfips), "birthyr", "gender.2", "educ.2", 
-      paste0("votereg.", c(2, 3)), "race.2", paste0("employ.", c(2, 5, 8, 9)),
-      "marstat.5", paste0("pid7.", c(4, 7, 8)), paste0("ideo5.", c(4, 5, 6)),
-      "child18.2", "newsint.4", paste0("immstat.", c(2, 4, 5)), 
-      paste0("healthins_", c(1, 2, 6), ".2"), 
-      paste0("CC16_302.", c(2, 4)), paste0("CC16_304.", c(2, 4, 6)),
-      paste0("CC16_326.", c(2, 4, 88)), "CC16_327.2",
-      paste0("CC16_328.", c(2, 4, 88)),
-      paste0("CC16_321", c("a.4", "b.4", "c.4", "c.88", "d.2", "d.4", "d.88")),
-      paste0("CC16_320", c("a.3", "a.4", "a.5", "b.3", "b.4", "b.5", "c.2",
-                           "c.5", "d.5", "d.88", "e.5", "e.88", "f.2", "f.5",
-                           "g.4", "g.5", "g.88", "h.5", "h.88")),
-      paste0("CC16_330", c("d.2", "e.2")),
-      paste0("CC16_332", c("a.2", "b.2", "c.2", "d.2", "e.2")),
-      paste0("CC16_331_", c("1.2", "2.2", "3.2", "7.2")), "CC16_335.2", 
-      paste0("CC16_333", c("a.2", "a.88", "b.2", "b.88", 
-                           "c.2", "c.88", "d.2", "d.88")), 
-      paste0("CC16_334", c("a.2", "c.2", "d.2")),
-      paste0("CC16_337_", c("1.3", "1.88", "2.2", "2.3", "2.88",
-                            "3.2", "3.3", "3.88")), 
-      paste0("CC16_340", c("i.8", "i.88", "h.7", "h.8", "h.88", "g.7", "g.8",
-                           "g.88", "e.8", "d.7", "d.8", "c.5", "c.7", "c.8",
-                           "b.8", "b.88", "a.2", "a.4", "a.6", "a.7", "a.8")), 
-      paste0("CC16_351", c("B.2", "F.2", "I.2", "K.2")),
-      paste0("CC16_414_", c("1.2", "2.2", "5.2", "7.2")), "CC16_415r"
-    ),
-    label = c(
-      unlist(lapply(fips$stname, simple_cap)), "Birth year", "Gender", 
-      "High-school graduate", "Not registered to vote",
-      "Not sure about my voter reg. status", "Black",
-      "Employed part-time", "Retired", "Student", "Employment other", "Single",
-      paste0("7-pt Party ID: ", c("Independent", "Strong rep.", "Not sure")),
-      paste0("My political viewpoint is: ", 
-             c("conservative", "very conservative", "not sure")), 
-      "No children under 18", "Interested in politics: hardly at all",
-      paste0("Immigrant ", c("non-citizen", "2nd gen.", "3rd gen.")),
-      paste0("Health insurance not through ", 
-             c("job/family employer", "Medicare/Medicaid")), 
-      "No health insurance",
-      paste0("Last year nat'l economy has: gotten ", c("better", "worse")), 
-      paste0("Project economy next year: ", 
-             c("somewhat better", "somewhat worse", "not sure")), 
-      "Voted Romney in 2012", "Voted not for Obama/Romney in 2012", 
-      "Not voted in 2012", "Not voted in primaries 2016", 
-      "Voted for Sanders in primary", "Voted for Trump in primary", 
-      "Skipped answering primary vote status 2016",
-      paste0("Not sure which party has majority: ", 
-             c("House", "Senate", "State Senate")), 
-      "Skipped which party has majority: State Senate",
-      "Correct about which party has majority: Lower Chamber",
-      "Not sure which party has majority: Lower Chamber",
-      "Skipped which party has majority: Lower Chamber",
-      "Somewhat disapprove of Obama", "Strongy disapprove of Obama",
-      "Obama approval not sure", "Somewhat disapprove of Congress",
-      "Strongy disapprove of Congress", "Congress approval not sure", 
-      "Supreme court approval: somewhat approve", 
-      "Supreme court approval: not sure",
-      "Governor approval: not sure", "Governor approval: skipped",
-      "Legislature approval: not sure", "Legislature approval: skipped",
-      "Rep approval: somewhat approve", "Rep Party approval: not sure",
-      paste0("Own-state Senator 1 approval: ",
-             c("strongly disapprove", "not sure", "skipped")),
-      paste0("Own-state Senator 2 approval: ", c("not sure", "skipped")),
-      "Oppose banning assault rifles", 
-      "Oppose making easier concealed gun permit", 
-      paste0("Oppose abortion = ", 
-             c("choice", "only when rape", "all prohibit after 20th week")),
-      "Oppose employers declining coverage of abortions in insurance",
-      "Oppose prohibiting federal funds for abortion",
-      "Grant status to all illegal immigrants who had jobs/taxes/no crime?",
-      "Increase patrol for immigration?", 
-      "Grant status to immigrant children with US high school diploma?",
-      "Identify and deport illegal immigration?", "Oppose gay marriage",
-      "Oppose EPA regulating CO2", "Skipped EPA regulate CO2", 
-      "Oppose raising required fuel efficiency",
-      "Skipped raising required fuel efficiency",
-      "Oppose requiring min. renewable fuel",
-      "Skipped requiring min. renewable fuel",
-      "Oppose strengthening Clean Air Act",
-      "Skipped question on strengthening Clean Air Act", 
-      "Oppose eliminating min. sentences for non-violent drug offenders",
-      "Oppose increasing police 10%", 
-      "Oppose increasing prison sentences for 2+ crimes felons",
-      "Cut defense spending << others to cover federal deficit", 
-      "Skipped answering: cut defense spending to cover fed. deficit?",
-      "Cut domestic spending = 2nd preference to cover federal deficit",
-      "Cut domestic spending = last preference to cover federal deficit", 
-      "Skipped answering: cut domestic spending to cover fed. deficit?",
-      "Raise taxes = 2nd choice to cover federal deficit",
-      "Raise taxes << others to cover federal deficit",
-      "Skipped answering raise taxes to cover fed. deficit",
-      paste0("Supreme court polit. scale = ", c("not sure", "skipped")), 
-      paste0("Rep party polit. scale = ", 
-             c("very conservative", "not sure", "skipped")), 
-      paste0("Dem party polit. scale = ", 
-             c("very conservative", "not sure", "skipped")), 
-      "Trump polit. scale = not sure",
-      paste0("Clinton polit. scale = ", c("very conservative", "not sure")), 
-      paste0("Obama polit. scale = ", 
-             c("somewhat conservative", "very conservative", "not sure")), 
-      paste0("Governor polit. scale = ", c("not sure", "skipped")), 
-      paste0("I would rate myself: ", 
-             c("liberal", "middle of road", "conservative", 
-               "very conservative", "not sure")), 
-      "Vote for Trans-Pacific Partnership Act?", 
-      "Vote for Highway and Transportation Funding Act?",
-      "Oppose repealing Affordable Care Act", 
-      "Oppose raising minimum wage",
-      "Approve of military deploy to ensure supply of oil?",
-      "Approve of military deploy to destroy terrorist camp?",
-      "Oppose military deployment to protect allies",
-      "Approve of military deploy to ... none?",
-      "Cutting spending preferred to raising taxes"
-    )
-  )
-cces_label <- 
-  data.frame(variable = cces_label$rownames, label = cces_label$label) %>%
-  mutate_if(is.factor, as.character)
 
 # Functions (graphics) =========================================================
 ## Plot logit-cart-rf-ff ROC curve comparison ----------------------------------
