@@ -1,4 +1,6 @@
 source('fuzzy_forest_utility.R')
+## Does not work with putty and X11 as source("perf.R", print.eval = TRUE)
+## For future reference. Rscript perf.R is fine
 
 load("./data/turnout.Rda")
 load("./output/turn.logit.Rda")
