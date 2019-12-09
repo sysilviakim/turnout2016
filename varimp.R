@@ -28,9 +28,7 @@ varimp.df <-
   dplyr::mutate(ff = DMwR::ReScaling(ff, 0, 100)) %>%
   dplyr::filter(logit + cart + rf + ff > 0) %>%
   rowwise() %>% 
-  dplyr::mutate(
-    label = (cces_label %>% dplyr::filter(variable == rownames))$label
-  )
+  dplyr::left_join(., cces_label, by = c("rownames" = "variable") 
 
 # Counterfactuals ==============================================================
 ff <- turn.ff$method$final_rf
