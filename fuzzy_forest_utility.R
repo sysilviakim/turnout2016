@@ -408,10 +408,10 @@ varimp_routine <- function(method, choice_top = 20, x) {
 
 ## Screening strength routine --------------------------------------------------
 screen_routine <- function(varimp.df, method, i, train, test, mtrys) {
-  vars <-
-    (varimp.df %>%
-      dplyr::arrange(desc(!!as.name(method))) %>%
-      dplyr::filter(row_number() < (i + 1)))$rownames
+  vars <-varimp.df %>%
+    dplyr::arrange(desc(!!as.name(method))) %>%
+    .[seq(i), ] %>%
+    .$rownames
   x <- train(
     depvar ~ .,
     metric = "ROC",
@@ -531,9 +531,7 @@ varImpPlotFF <- function(x, cces_label) {
     ) %>% 
     dplyr::select(-module_membership) %>%
     rowwise() %>% 
-    dplyr::mutate(
-      label = (cces_label %>% dplyr::filter(variable == feature_name))$label
-    ) %>%
+    dplyr::left_join(., cces_label, by = c("feature_name" = "variable")) %>%
     ggplot() + 
     aes(
       x = variable_importance,
